@@ -10,14 +10,25 @@
         http://www.springframework.org/schema/tx/spring-tx.xsd
         http://www.springframework.org/schema/context
         http://www.springframework.org/schema/context/spring-context.xsd">
+
     <context:annotation-config/>
+
     <context:component-scan base-package="org.openrdf.spring"/>
+
     <tx:annotation-driven transaction-manager="transactionManager"/>
+
     <tx:annotation-driven transaction-manager="repositoryTransactionManager"/>
 
+<!-- 
     <bean id="sesameRepository" class="org.openrdf.repository.sail.SailRepository" init-method="initialize">
         <constructor-arg ref="memoryStore"/>
     </bean>
+    -->
+    <bean id="sesameRepository" class="com.bigdata.rdf.sail.remote.BigdataSailRemoteRepository" >
+        <constructor-arg index="0" value="http://localhost:8081/bigdata"/>
+        <constructor-arg index="1" value="false"/>
+    </bean>
+    
 
     <bean id="memoryStore" class="org.openrdf.sail.memory.MemoryStore">
         <property name="persist" value="false"/>
@@ -31,10 +42,22 @@
         <constructor-arg ref="repositoryConnectionFactory"/>
     </bean>
 
+    <bean id="repositoryManager" class="org.openrdf.repository.manager.RemoteRepositoryManager"
+          init-method="initialize">
+	    <constructor-arg value="http://localhost:5358/openrdf-sesame/">
+	    </constructor-arg>
+    </bean>
+
+<!-- 
     <bean id="repositoryManager" class="org.openrdf.repository.manager.LocalRepositoryManager"
           init-method="initialize">
-        <constructor-arg value="."/>
+	    <constructor-arg>
+	        <bean class="java.io.File">
+	            <constructor-arg value="/tmp"/>
+	        </bean>
+	    </constructor-arg>
     </bean>
+ -->
 
     <bean id="repositoryManagerConnectionFactory" class="org.openrdf.spring.RepositoryManagerConnectionFactory">
         <constructor-arg index="0" ref="repositoryManager"/>
@@ -43,5 +66,9 @@
 
     <bean id="repositoryTransactionManager" class="org.openrdf.spring.SesameTransactionManager">
         <constructor-arg ref="repositoryManagerConnectionFactory"/>
+    </bean>
+    
+    <bean id="transactionBean" class="org.openrdf.spring.TransactionBean">
+        <property name="repositoryConnectionFactory" ref="repositoryConnectionFactory"/>
     </bean>
 </beans>

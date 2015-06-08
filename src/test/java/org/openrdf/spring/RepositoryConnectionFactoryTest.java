@@ -7,13 +7,27 @@ import org.openrdf.IsolationLevels;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.sail.SailRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 
 public class RepositoryConnectionFactoryTest extends BaseTest {
-    @Test(expected = SesameTransactionException.class)
+	
+	@Autowired
+	TransactionBean transactionBean;
+	
+    public TransactionBean getTransactionBean() {
+		return transactionBean;
+	}
+
+    public void setTransactionBean(TransactionBean transactionBean) {
+		this.transactionBean = transactionBean;
+	}
+
+	@Test(expected = SesameTransactionException.class)
     public void testFactoryDoesNotCreateConnection() throws RepositoryException {
         repositoryConnectionFactory.getConnection();
     }
@@ -90,5 +104,29 @@ public class RepositoryConnectionFactoryTest extends BaseTest {
         RepositoryConnection connection = repositoryConnectionFactory.getConnection();
 
         Assert.assertEquals(IsolationLevels.READ_UNCOMMITTED, connection.getIsolationLevel());
+    }
+    
+    @Test
+    public void testthrowDataCommit() throws Exception {
+    	TransactionBean tb = getTransactionBean();
+    	try {
+			tb.addData(repositoryConnectionFactory);
+		} catch (RepositoryException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+       	Assert.assertEquals(tb.getDataHasNext(), true);
+    }
+    
+    @Test
+    public void testthrowDataRollback() throws Exception {
+    	TransactionBean tb = getTransactionBean();
+    	try {
+			tb.addDataFail();
+		} catch (RepositoryException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+       	Assert.assertEquals(tb.getDataHasNext(), false);
     }
 }
